@@ -256,17 +256,19 @@ export class HttpAPIClient implements APIClient {
     durationMinutes: number;
     languageCode: string;
   }): Promise<Lullaby> {
-    return this.request<Lullaby>('/api/lullabies', {
+    console.log('📤 [FRONTEND] Creating lullaby with params:', params);
+    console.log('📤 [FRONTEND] Calling:', `${BASE_URL}/lullabies`);
+    return this.request<Lullaby>('/lullabies', {
       method: 'POST',
       body: JSON.stringify(params),
     });
   }
 
   async fetchLullabies(): Promise<Lullaby[]> {
-    return this.request<Lullaby[]>('/api/lullabies');
+    return this.request<Lullaby[]>('/lullabies');
   }
 
   async fetchLullaby(id: string): Promise<Lullaby> {
-    return this.request<Lullaby>(`/api/lullabies/${id}`);
+    return this.request<Lullaby>(`/lullabies/${id}`);
   }
 }

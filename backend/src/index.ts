@@ -13,10 +13,18 @@ const port = process.env.PORT || 4000;
 app.use(cors());
 app.use(express.json());
 
+// Log all incoming requests
+app.use((req, res, next) => {
+  console.log(`📥 [${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
 // Register routes
 app.use('/api/voice', voiceRoutes);
 app.use('/api/children', childRoutes);
 app.use('/api/lullabies', lullabyRoutes);
+// Also mount lullaby routes without /api prefix for direct access
+app.use('/lullabies', lullabyRoutes);
 
 app.get('/', (req: express.Request, res: express.Response) => {
   res.send({ ok: true, service: 'DODO backend' });

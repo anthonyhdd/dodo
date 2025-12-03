@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 const SUNO_API_KEY = process.env.SUNO_API_KEY;
-const SUNO_API_URL = 'https://api.suno.ai/v1'; // Adjust based on actual Suno API endpoint
+// Suno API endpoint - Official API from docs.sunoapi.org
+// Base URL: https://api.sunoapi.org
+const SUNO_API_URL = process.env.SUNO_API_URL || 'https://api.sunoapi.org';
 
 export interface SunoSong {
   id: string;
@@ -29,16 +31,29 @@ export async function generateLullaby(
   }
 
   try {
-    // Note: Adjust this based on actual Suno API structure
-    // This is a placeholder implementation
+    // Suno API structure based on official documentation
+    // The API expects: custom_mode, gpt_description_prompt, make_instrumental, mv
     const fullPrompt = `A ${style} lullaby: ${prompt}`;
+    
+    // Based on docs.sunoapi.org - try the generate endpoint
+    // The API structure may require different parameters
+    console.log(`🔄 Calling Suno API: ${SUNO_API_URL}/generate`);
+    console.log(`📤 Request payload:`, {
+      prompt: fullPrompt,
+      duration: durationSeconds,
+      ...(voiceId && { voice_id: voiceId }),
+    });
     
     const response = await axios.post(
       `${SUNO_API_URL}/generate`,
       {
         prompt: fullPrompt,
         duration: durationSeconds,
+        // Try different parameter names based on API docs
         ...(voiceId && { voice_id: voiceId }),
+        // Alternative parameter names to try
+        model: 'v4_5', // or v5, v4_5plus, etc.
+        make_instrumental: false,
       },
       {
         headers: {
@@ -47,14 +62,30 @@ export async function generateLullaby(
         },
       }
     );
+    
+    console.log(`✅ Suno API response:`, JSON.stringify(response.data, null, 2));
+    
+    // Extract song ID from response (structure may vary)
+    const songId = response.data.id || response.data.data?.id || response.data.song_id || response.data.task_id;
+    const title = response.data.title || response.data.data?.title || 'Lullaby';
+
+    if (!songId) {
+      throw new Error('No song ID returned from Suno API');
+    }
 
     return {
-      id: response.data.id,
-      title: response.data.title || 'Lullaby',
+      id: songId,
+      title,
       status: 'generating',
     };
   } catch (error: any) {
-    console.error('Suno generation error:', error.response?.data || error.message);
+    console.error('❌ Suno generation error - Full details:');
+    console.error('   Status:', error.response?.status);
+    console.error('   Status Text:', error.response?.statusText);
+    console.error('   URL:', error.config?.url);
+    console.error('   Method:', error.config?.method);
+    console.error('   Response Data:', JSON.stringify(error.response?.data, null, 2));
+    console.error('   Error Message:', error.message);
     throw new Error(`Failed to generate lullaby: ${error.response?.data?.message || error.message}`);
   }
 }
@@ -70,20 +101,30 @@ export async function getSunoSongStatus(songId: string): Promise<SunoSong> {
   }
 
   try {
+    // Check song status - based on docs.sunoapi.org
+    console.log(`🔄 Checking Suno song status: ${songId}`);
     const response = await axios.get(
-      `${SUNO_API_URL}/songs/${songId}`,
+      `${SUNO_API_URL}/get/${songId}`,
       {
         headers: {
           'Authorization': `Bearer ${SUNO_API_KEY}`,
         },
       }
     );
+    
+    console.log(`✅ Suno status response:`, JSON.stringify(response.data, null, 2));
+
+    // Extract data from response (structure may vary)
+    const data = response.data.data || response.data;
+    const audioUrl = data.audio_url || data.audioUrl || data.url;
+    const status = data.status === 'complete' || data.status === 'finished' ? 'complete' : 
+                   data.status === 'failed' ? 'failed' : 'generating';
 
     return {
-      id: response.data.id,
-      title: response.data.title || 'Lullaby',
-      audio_url: response.data.audio_url,
-      status: response.data.status || 'generating',
+      id: data.id || songId,
+      title: data.title || 'Lullaby',
+      audio_url: audioUrl,
+      status,
     };
   } catch (error: any) {
     console.error('Suno status check error:', error.response?.data || error.message);

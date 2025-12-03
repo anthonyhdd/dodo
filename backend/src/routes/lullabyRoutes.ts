@@ -15,6 +15,8 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 router.post('/', async (req: Request, res: Response) => {
+  console.log('📥 [ROUTE] POST /lullabies received');
+  console.log('📥 [ROUTE] Request body:', JSON.stringify(req.body, null, 2));
   try {
     const { childId, voiceProfileId, style, durationMinutes, languageCode } = req.body;
     
