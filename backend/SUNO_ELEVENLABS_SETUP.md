@@ -126,3 +126,4 @@ node -e "console.log('SUNO:', process.env.SUNO_API_KEY ? '✅ Set' : '❌ Missin
 - Vérifiez que le profil vocal a un `elevenlabs_voice_id` dans la base de données
 - Vérifiez les logs pour voir pourquoi Suno n'est pas utilisé
 
+

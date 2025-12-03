@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import voiceRoutes from './routes/voiceRoutes';
 import childRoutes from './routes/childRoutes';
 import lullabyRoutes from './routes/lullabyRoutes';
+import testRoutes from './routes/testRoutes';
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use((req, res, next) => {
 app.use('/api/voice', voiceRoutes);
 app.use('/api/children', childRoutes);
 app.use('/api/lullabies', lullabyRoutes);
+app.use('/api/test', testRoutes);
 // Also mount lullaby routes without /api prefix for direct access
 app.use('/lullabies', lullabyRoutes);
 

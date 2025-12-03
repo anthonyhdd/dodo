@@ -22,7 +22,7 @@ class DummyMusicGenerationProvider implements MusicGenerationProvider {
     voiceId?: string;
   }): Promise<{ audioBuffer: Buffer; format: 'mp3' | 'wav' }> {
     const testAudioPath = path.join(__dirname, '../../assets/sample-lullaby.mp3');
-
+    
     // 1. Utiliser un vrai MP3 local s'il existe
     if (fs.existsSync(testAudioPath)) {
       const fileBuffer = fs.readFileSync(testAudioPath);

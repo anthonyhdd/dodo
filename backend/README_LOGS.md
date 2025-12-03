@@ -98,3 +98,4 @@ Pour voir uniquement les logs liés à la génération :
 tail -f backend.log | grep -E "generateAndUploadLullaby|Suno|Background"
 ```
 
+

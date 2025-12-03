@@ -23,3 +23,4 @@ echo "   - ✅ Using Suno for generation OU ⚠️ Skipping Suno"
 echo "   - ❌ Suno generation failed (si erreur)"
 echo ""
 
+

@@ -154,11 +154,33 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     async function hydrate() {
       try {
         // Load from storage in background (no blocking)
+        // Wrap each call with better error handling for SQLite errors
+        const loadStorageItem = async (key: string) => {
+          try {
+            return await AsyncStorage.getItem(key);
+          } catch (error: any) {
+            // Handle SQLite errors gracefully
+            if (error?.message?.includes('SQLite') || error?.code === 14) {
+              console.warn(`⚠️ SQLite error loading ${key}, continuing without persisted data:`, error.message);
+              // Try to clear the corrupted key
+              try {
+                await AsyncStorage.removeItem(key);
+                console.log(`🧹 Cleared corrupted key: ${key}`);
+              } catch (clearError) {
+                console.warn(`⚠️ Failed to clear corrupted key ${key}:`, clearError);
+              }
+            } else {
+              console.warn(`⚠️ Error loading ${key}:`, error);
+            }
+            return null;
+          }
+        };
+        
         const [voiceJson, childrenJson, lullabiesJson, settingsJson] = await Promise.all([
-          AsyncStorage.getItem(STORAGE_KEYS.VOICE_PROFILE).catch(() => null),
-          AsyncStorage.getItem(STORAGE_KEYS.CHILDREN).catch(() => null),
-          AsyncStorage.getItem(STORAGE_KEYS.LULLABIES).catch(() => null),
-          AsyncStorage.getItem(STORAGE_KEYS.SETTINGS).catch(() => null),
+          loadStorageItem(STORAGE_KEYS.VOICE_PROFILE),
+          loadStorageItem(STORAGE_KEYS.CHILDREN),
+          loadStorageItem(STORAGE_KEYS.LULLABIES),
+          loadStorageItem(STORAGE_KEYS.SETTINGS),
         ]);
 
         if (voiceJson) {
@@ -204,20 +226,42 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     hydrate();
   }, []);
 
+  // Helper function to safely save to AsyncStorage
+  const safeSetItem = async (key: string, value: string) => {
+    try {
+      await AsyncStorage.setItem(key, value);
+    } catch (error: any) {
+      if (error?.message?.includes('SQLite') || error?.code === 14) {
+        console.warn(`⚠️ SQLite error saving ${key}, data will not persist:`, error.message);
+        console.warn('💡 Try clearing app cache: npx expo start --clear');
+      } else {
+        console.warn(`⚠️ Error saving ${key}:`, error);
+      }
+    }
+  };
+
+  const safeRemoveItem = async (key: string) => {
+    try {
+      await AsyncStorage.removeItem(key);
+    } catch (error: any) {
+      if (error?.message?.includes('SQLite') || error?.code === 14) {
+        console.warn(`⚠️ SQLite error removing ${key}:`, error.message);
+      } else {
+        console.warn(`⚠️ Error removing ${key}:`, error);
+      }
+    }
+  };
+
   // Persist voiceProfile (with debouncing to prevent infinite loops)
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
-      try {
-        if (state.voiceProfile) {
-          await AsyncStorage.setItem(
-            STORAGE_KEYS.VOICE_PROFILE,
-            JSON.stringify(state.voiceProfile)
-          );
-        } else {
-          await AsyncStorage.removeItem(STORAGE_KEYS.VOICE_PROFILE);
-        }
-      } catch (e) {
-        console.warn('Failed to save voice profile:', e);
+      if (state.voiceProfile) {
+        await safeSetItem(
+          STORAGE_KEYS.VOICE_PROFILE,
+          JSON.stringify(state.voiceProfile)
+        );
+      } else {
+        await safeRemoveItem(STORAGE_KEYS.VOICE_PROFILE);
       }
     }, 500); // Debounce 500ms
 
@@ -227,14 +271,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   // Persist children (with debouncing)
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
-      try {
-        await AsyncStorage.setItem(
-          STORAGE_KEYS.CHILDREN,
-          JSON.stringify(state.children)
-        );
-      } catch (e) {
-        console.warn('Failed to save children:', e);
-      }
+      await safeSetItem(
+        STORAGE_KEYS.CHILDREN,
+        JSON.stringify(state.children)
+      );
     }, 500);
 
     return () => clearTimeout(timeoutId);
@@ -243,14 +283,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   // Persist lullabies (with debouncing)
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
-      try {
-        await AsyncStorage.setItem(
-          STORAGE_KEYS.LULLABIES,
-          JSON.stringify(state.lullabies)
-        );
-      } catch (e) {
-        console.warn('Failed to save lullabies:', e);
-      }
+      await safeSetItem(
+        STORAGE_KEYS.LULLABIES,
+        JSON.stringify(state.lullabies)
+      );
     }, 500);
 
     return () => clearTimeout(timeoutId);
@@ -259,14 +295,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   // Persist settings (with debouncing)
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
-      try {
-        await AsyncStorage.setItem(
-          STORAGE_KEYS.SETTINGS,
-          JSON.stringify(state.settings)
-        );
-      } catch (e) {
-        console.warn('Failed to save settings:', e);
-      }
+      await safeSetItem(
+        STORAGE_KEYS.SETTINGS,
+        JSON.stringify(state.settings)
+      );
     }, 500);
 
     return () => clearTimeout(timeoutId);

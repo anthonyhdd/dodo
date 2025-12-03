@@ -12,6 +12,7 @@ import { HomeScreen } from '../screens/HomeScreen';
 import { NewLullabyScreen } from '../screens/NewLullabyScreen';
 import { LullabyPlayerScreen } from '../screens/LullabyPlayerScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { TestWorkflowScreen } from '../screens/TestWorkflowScreen';
 
 export type RootStackParamList = {
   OnboardingWelcome: undefined;
@@ -24,6 +25,7 @@ export type RootStackParamList = {
   OnboardingVoiceReady: undefined;
   Home: undefined;
   NewLullaby: undefined;
+  TestWorkflow: undefined;
   LullabyPlayer: { lullabyId: string };
   Settings: undefined;
 };
@@ -31,7 +33,7 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 type RootNavigatorProps = {
-  initialRouteName?: 'Home' | 'OnboardingWelcome';
+  initialRouteName?: 'Home' | 'OnboardingWelcome' | 'TestWorkflow';
 };
 
 export function RootNavigator({ initialRouteName = 'OnboardingWelcome' }: RootNavigatorProps) {
@@ -62,6 +64,7 @@ export function RootNavigator({ initialRouteName = 'OnboardingWelcome' }: RootNa
         component={SettingsScreen}
         options={{ title: 'Paramètres' }}
       />
+      <Stack.Screen name="TestWorkflow" component={TestWorkflowScreen} />
     </Stack.Navigator>
   );
 }

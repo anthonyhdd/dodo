@@ -50,9 +50,13 @@ export async function cloneVoiceFromSamples(
         throw new Error(`Audio file not found: ${audioFile}`);
       }
       
+      // Determine file extension and content type from path
+      const fileExt = audioFile.toLowerCase().endsWith('.mp3') ? 'mp3' : 'm4a';
+      const contentType = fileExt === 'mp3' ? 'audio/mpeg' : 'audio/m4a';
+      
       formData.append('files', fileBuffer, {
-        filename: `sample-${Date.now()}-${Math.random().toString(36).slice(2)}.m4a`,
-        contentType: 'audio/m4a',
+        filename: `sample-${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`,
+        contentType,
       });
     }
 
